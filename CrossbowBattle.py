@@ -437,9 +437,9 @@ while Run_Game:
 
     Arrow_Hit_Selecter()
 
-    screen.blit(healthbar, (5, 5))
-    for currenthealth in playerHealth:
-        screen.blit(health, (currenthealth + 8, 8))
+    # screen.blit(healthbar, (5, 5))
+    # for currenthealth in playerHealth:
+    #     screen.blit(health, (currenthealth + 8, 8))
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
