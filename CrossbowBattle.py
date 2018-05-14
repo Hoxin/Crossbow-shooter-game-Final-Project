@@ -21,14 +21,16 @@ SOURCES = (
            'https://stackoverflow.com/questions/20044791/how-to-make-an-enemy-follow-the-player-in-pygame'
            'https://gamedev.stackexchange.com/questions/106457/move-an-enemy-towards-the-player-in-pygame'
            'https://docs.python.org/3/library/math.html#hyperbolic-functions'
-           'My Dad'
            )
 
+
+#Basic imports
 import pygame
 import math
 from pygame.locals import *
 from random import *
 
+#Creates the display for pygame
 pygame.init()
 pygame.mixer.init()
 clock = pygame.time.Clock()
@@ -37,9 +39,11 @@ displayHeigth = 800
 screen = pygame.display.set_mode((displayWidth, displayHeigth))
 pygame.display.set_caption('Crossbow Battle')
 
+# These are the two script paths, one for the local drie and one for one drive, which should be added to the pygame load function if using pycharm as your IDE.
 ScriptPath_OneDrive = "C:/Users/Chris.Carmona18/OneDrive - Bellarmine College Preparatory/Intro to CS/Chris/"
 ScriptPath_Local = "C:/Users/Chris.Carmona18/Desktop/Coding Stuff/Chris/"
 
+# Loads all the game images:
 background = pygame.image.load(ScriptPath_Local + "resources/CrossbowGameImages/Dirt_Background_1200x800_HighRes.png")
 healthbar = pygame.image.load(ScriptPath_Local + "resources/CrossbowGameImages/healthbar.png")
 health = pygame.image.load(ScriptPath_Local + "resources/CrossbowGameImages/Healthbar.png")
@@ -62,14 +66,16 @@ enemy_four = pygame.image.load(ScriptPath_Local + "resources/CrossbowGameImages/
 # enemy_Boss_two = pygame.image.load(ScriptPath_Local + "resources/CrossbowGameImages/")
 # enemy_Boss_three = pygame.image.load(ScriptPath_Local + "resources/CrossbowGameImages/")
 
-
+# Defines a color fo the background, creates an empty array that will be used later, and the dead script for when the player is killed
 darkgoldenrod = [184, 134, 11]
 arrows = []
 Dead = "Lmao ur trash"
 
+# Draws the player in teh middle of the screen, as well creates an array that will dictate whether certain functions for his movement will be active or not
 playerInitialpos = [displayWidth * 0.5, displayHeigth * 0.5]
 move = [False, False, False, False]
 
+# Creates a class that can draw the background using either an image or a solid color
 class Background():
     def __init__(self, image, BG_Color):
         self.image = image
@@ -83,7 +89,8 @@ class Background():
         screen.fill(self.BG_Color)
 GameSurface = Background(background, darkgoldenrod)
 
-
+# Creates the arrow class... within the class, I create separate functions for each of the arrows that have different functions. The three main arrow control functions are
+# "Coordinates", "Control", and "Hit" respectively. "
 class Arrows():
     def __init__(self, arrowImage, arrowSpeed, arrowDamage):
         self.arrowImage = arrowImage
@@ -98,6 +105,7 @@ class Arrows():
         self.arrowSpeed = speed
         self.damage = damage
 
+    # "Coordinates set the initial x and y positions of the arrows, and appends said positions to the arrow array so they can be manipulated in the "Control" function
     def Basic_Coordinates(self):
         radconvert = (360 / (2 * math.pi))
         mousePos = pygame.mouse.get_pos()
@@ -111,6 +119,7 @@ class Arrows():
                        playerPos[0] + (player.get_rect().width / 2), playerPos[1] + (player.get_rect().height / 2),
                        playerPos[0] + (player.get_rect().width / 2), playerPos[1] + (player.get_rect().height / 2),
                        playerPos[0] + (player.get_rect().width / 2), playerPos[1] + (player.get_rect().height / 2)])
+    # "Control" draws the arrows, orients them in the direction they are fired, and moves them in the same direction based on the arrow speed set.
     def Basic_Control(self):
         index = 0
         arrowVelx = math.cos(bullet[0]) * self.arrowSpeed
@@ -124,36 +133,58 @@ class Arrows():
             global arrowGameImage
             arrowGameImage = pygame.transform.rotate(self.arrowImage, 360 - projectile[0] * radconvert)
             screen.blit(arrowGameImage, (projectile[3], projectile[4]))
+    # "Hit" controls when an arrow collides with an enemy, and deals the respective damage to the enemy. Also, due to the order operations are done in the branch of code,
+    # the enemy impact with the player is also controlled in this function. Although not related to the control of the arrow at all, there are variables that are defined
+    # for both the arrow hit and enemy hit that are used, so I put them in the same function, for now.
     def Basic_Hit(self):
         enemyIndex = 0
         for enemy in enemyList:
+            # The "enemy.Enemy_Control()" functions draws an enemy for every enemy instance appended into the enemy array:
             enemy.Enemy_Control()
             pos = enemy.Get_enemyPos()
             if pos != playerPos:
+                # Moves the enemy towards the player if his position does not equal the player's position:
                 enemy.Enemy_Move()
+            # Sets the "hit box" for the player, and checks if any enemies' hit box is within the player's hit box.
             if enemy.Get_enemyPos()[0] >= Player1.Get_playerPos()[0] and enemy.Get_enemyPos()[0] <= \
                     Player1.Get_playerPos()[0] + player.get_rect().width and \
                     enemy.Get_enemyPos()[1] >= Player1.Get_playerPos()[1] and enemy.Get_enemyPos()[1] <= \
                     Player1.Get_playerPos()[1] + player.get_rect().height:
                 global playerHealth
+                # Decrements the player's health however much the damage the enemy deals to the player
                 playerHealth = playerHealth - enemy.Get_enemyDamage()
+                # Checks if the player has no more health:
                 if playerHealth <= 0:
                     print(Dead)
                     global Run_Game
                     Run_Game = False
+
+            # OK.... THIS is where arrow control begins...:
+
+            # Sets a variable that will be used to delete the arrows when they "hit" an enemy, or enter the hit box of the enemy.
             arrowIndex = 0
+            # Creates a for loop for every arrow created and thus appended to the arrow array.
             for projectile in arrows:
+                # Checks if an arrow enters the hitbox of an enemy:
                 if projectile[3] >= enemy.Get_enemyPos()[0] and projectile[3] <= enemy.Get_enemyPos()[0] + \
                         enemy.Get_enemyDimensions()[0] and \
                         projectile[4] >= enemy.Get_enemyPos()[1] and projectile[4] <= enemy.Get_enemyPos()[1] + \
                         enemy.Get_enemyDimensions()[1]:
+                    # Decrements the respective arrow damage to the enemy... to do this, a new variable called "enemyHealth" is created, which is set to the Current enemies
+                    # health before the arrow collision, and then has the arrow damage subtracted to calculate the new health after the "damage" was inflicted.
                     enemyHealth = enemy.Get_enemyHealth() - self.arrowDamage
+                    # Deletes the arrow that hit the enemy:
                     arrows.pop(arrowIndex)
+                    # Checks if an enemies' health is lower or equal to zero. If so, it deletes the enemy.
                     if enemyHealth <= 0:
                         enemyList.pop(enemyIndex)
+                    # If the enemy health is NOT less than or equal to zero, the "enemy.Set_enemyHealth(enemyHealth)" function is passed, which updates the enemy health by
+                    # updating the current enemy health with the new health:
                     elif enemyHealth > 0:
                         enemy.Set_enemyHealth(enemyHealth)
+                # Increases the arrow index for every arrow created:
                 arrowIndex += 1
+            # Increases the enemy index for every enemy drawn:
             enemyIndex += 1
 
     def HollowPoint_Hit(self):
@@ -283,45 +314,52 @@ class Arrows():
                 arrowIndex += 1
             enemyIndex += 1
 
+# Sets the base arrow type that the player will spawn with
 Arrow_Type = Arrows(Basic_Arrow, 2.0, 4)
-Selected_Arrow = Basic_Arrow
+# Sets a variable that defines the arrow that is currently in use by the player.
+Selected_Arrow = "Basic_Arrow"
+# The following function sets teh arrow image, speed, and damage depending on which arrow is selected.
 def Arrow_Attribute_Selecter():
-    if Selected_Arrow == Basic_Arrow:
+    if Selected_Arrow == "Basic_Arrow":
         Arrow_Type.Set_ArrowAttributes(Basic_Arrow, 2.0, 4)
-    if Selected_Arrow == Steel_Arrow:
+    elif Selected_Arrow == "Steel_Arrow":
         Arrow_Type.Set_ArrowAttributes(Steel_Arrow, 2.0, 7)
-    if Selected_Arrow == HollowPoint_Arrow:
+    elif Selected_Arrow == "HollowPoint_Arrow":
         Arrow_Type.Set_ArrowAttributes(HollowPoint_Arrow, 2.0, 2)
-    if Selected_Arrow == Tri_Arrow:
+    elif Selected_Arrow == "Tri_Arrow":
         Arrow_Type.Set_ArrowAttributes(Tri_Arrow, 2.0, 3)
-    if Selected_Arrow == Frost_Arrow:
+    elif Selected_Arrow == "Frost_Arrow":
         Arrow_Type.Set_ArrowAttributes(Frost_Arrow, 2.0, 4)
 
+# The following three function set the specific "Coordinates", "Control", and "Hit" functions respectively that will be used for the arrow selected. If the function that
+# controls the arrow is no different than the basic arrow's functions, the arrows are just set to use the "basic" function since it is the base code that has no unique
+# modifications to it.
 def Arrow_Coordinate_Selecter():
-    if Selected_Arrow == Basic_Arrow or Steel_Arrow or HollowPoint_Arrow or Tri_Arrow or Frost_Arrow:
+    if Selected_Arrow == "Basic_Arrow" or "Steel_Arrow" or "HollowPoint_Arrow" or "Tri_Arrow" or "Frost_Arrow":
         Arrow_Type.Basic_Coordinates()
 def Arrow_Control_Selecter():
-    if Selected_Arrow == Basic_Arrow or Steel_Arrow or HollowPoint_Arrow or Frost_Arrow:
+    if Selected_Arrow == "Basic_Arrow" or "Steel_Arrow" or "HollowPoint_Arrow" or "Frost_Arrow":
         Arrow_Type.Basic_Control()
-    if Selected_Arrow == Tri_Arrow:
+    elif Selected_Arrow == "Tri_Arrow":
         Arrow_Type.Tri_Control()
 def Arrow_Hit_Selecter():
-    if Selected_Arrow == Basic_Arrow or Steel_Arrow:
+    if Selected_Arrow == "Basic_Arrow" or "Steel_Arrow":
         Arrow_Type.Basic_Hit()
-    if Selected_Arrow == HollowPoint_Arrow:
+    elif Selected_Arrow == "HollowPoint_Arrow":
         Arrow_Type.HollowPoint_Hit()
-    if Selected_Arrow == Tri_Arrow:
+    elif Selected_Arrow == "Tri_Arrow":
         Arrow_Type.Tri_Hit()
-    if Selected_Arrow == Frost_Arrow:
+    elif Selected_Arrow == "Frost_Arrow":
         Arrow_Type.Frost_Hit()
 
-
+# The following creates the Player class, and houses the functions that control the player's orientation and image as it is redrawn according to the player's movement.
 class Character():
     def __init__(self, image, playerSpeed, playerHealth, WeaponType):
         self.image = image
         self.playerSpeed = playerSpeed
         self.playerHealth = playerHealth
         self.WeaponType = WeaponType
+    # Controls the players orientation:
     def PlayerSetup(self):
         radconvert = (360 / (2 * math.pi))
         mousePos = pygame.mouse.get_pos()
@@ -334,12 +372,15 @@ class Character():
         screen.blit(playerRotation, playerPos)
     def Get_playerPos(self):
         return playerPos
+    # Gets the players health... is used for when the enemies deal damage to the player.
     def Get_PlayerHealth(self):
         return self.playerHealth
+# Sets the parameters for the player.
 Player1 = Character(player, 1.00, 200, "")
+# Creates a variable equal to the Player's health.
 playerHealth = Player1.Get_PlayerHealth()
 
-
+# Creates the Enemy Class:
 class Enemy():
     def __init__(self, image, enemySpeed, enemyDamage, enemyHealth, xcor, ycor, xdimension, ydimension):
         self.image = image
@@ -351,6 +392,7 @@ class Enemy():
         self.xdimension = xdimension
         self.ydimension = ydimension
         self.enemyPos = (0, 0)
+    # Controls the Enemies orientation to the player, and draws them in the direction of the player.
     def Enemy_Control(self):
         radconvert = (360 / (2 * math.pi))
         enemyAngle = math.atan2(playerPos[1] - self.ycor, playerPos[0] - self.xcor)
@@ -358,6 +400,7 @@ class Enemy():
         enemyRotation = pygame.transform.rotate(self.image, 360 - enemyAngle * radconvert)
         self.enemyPos = [self.xcor - (enemyRotation.get_rect().width / 2 - 30), self.ycor - (enemyRotation.get_rect().height / 2 - 30)]
         screen.blit(enemyRotation, self.enemyPos)
+    # Moves the enemies towards the player a certain amount according to the enemies' speed.
     def Enemy_Move(self):
         enemyAngle = math.atan2(playerPos[1] - self.ycor, playerPos[0] - self.xcor)
         xmove = math.cos(enemyAngle) * self.enemySpeed
@@ -370,14 +413,20 @@ class Enemy():
         return self.enemyDamage
     def Get_enemyHealth(self):
         return self.enemyHealth
+    # Returns the dimensions of the enemies that were set as a base attribute... used the the "Hit" functions in the arrow class for calculating when an arrow hits an enemy,
+    # as well as when an enemy hits the player.
     def Get_enemyDimensions(self):
         x = self.xdimension
         y = self.ydimension
         enemyDimensions = (x, y)
         return enemyDimensions
+    # This function, when run, will update the enemy health with the new "health" variable that is passed. This variable is passed ot the arrow "hit" functions, which is
+    # equal to the current set enemy health, and is then decremented by the arrow's attack value everytime an arrow colides with an enemy.
     def Set_enemyHealth(self, health):
         self.enemyHealth = health
 
+# The following function gets a random spawn side for the enemies, as well as random x or y coorinates depending on if the enemy spawns on the top, bottom, left, or right
+# of the screen:
 def GetSpawnCoordinates():
     SpawnLocation = randint(1, 4)
     if SpawnLocation == 1:
@@ -393,6 +442,9 @@ def GetSpawnCoordinates():
         EnemySpawn = [1200, randint(0, displayHeigth)]
         return EnemySpawn
 
+# Chooses a random enemy out of the number of enemies I have currently created, and appends an instance of the enemy class for that enemy with all of its specific parameters.
+# Within the parameters, the x and y coordinates for the enemies initial positions are set using the GetSpawnCoordinates() function, which is set
+# within the loop as SpawnLocation:
 def Get_Enemy():
     EnemySelect = randint(1, 4)
     if EnemySelect == 1:
@@ -408,11 +460,16 @@ def Get_Enemy():
         SelectedEnemy = Enemy(enemy_four, 0.35, 1, 32, SpawnLocation[0], SpawnLocation[1], enemy_four.get_rect().width, enemy_four.get_rect().height)
         return SelectedEnemy
 
+
+# Creates an empty enemy array that will hold all of the instances for each enemy:
 enemyList = []
+# Sets a variable that is equal to the amount of enemies currently within the game:
 EnemyCount = 0
+# Sets the amount of frames that will pass before each enemy will spawn.
 SpawnCount = 15000
+# Sets the amount the "SpawnCount" is decremented by every time the game loop loops through.
 Countdown = 25
-MaximumEnemies = 45
+MaximumEnemies = 10
 
 Run_Game = True
 while Run_Game:
@@ -422,7 +479,11 @@ while Run_Game:
     Player1.PlayerSetup()
 
     for bullet in arrows:
-        Arrow_Control_Selecter()
+        # Arrow_Control_Selecter()
+        if Selected_Arrow == "Basic_Arrow" or "Steel_Arrow" or "HollowPoint_Arrow" or "Frost_Arrow":
+            Arrow_Type.Basic_Control()
+        elif Selected_Arrow == "Tri_Arrow":
+            Arrow_Type.Tri_Control()
 
     if SpawnCount <= 0:
         SpawnLocation = GetSpawnCoordinates()
@@ -435,7 +496,15 @@ while Run_Game:
         SpawnCount = 5000
         Countdown = 0
 
-    Arrow_Hit_Selecter()
+    # Arrow_Hit_Selecter()
+    if Selected_Arrow == "Basic_Arrow" or "Steel_Arrow":
+        Arrow_Type.Basic_Hit()
+    elif Selected_Arrow == "HollowPoint_Arrow":
+        Arrow_Type.HollowPoint_Hit()
+    elif Selected_Arrow == "Tri_Arrow":
+        Arrow_Type.Tri_Hit()
+    elif Selected_Arrow == "Frost_Arrow":
+        Arrow_Type.Frost_Hit()
 
     # screen.blit(healthbar, (5, 5))
     # for currenthealth in playerHealth:
@@ -454,19 +523,19 @@ while Run_Game:
             elif event.key == K_d:
                 move[3] = True
             if event.key == K_1:
-                Selected_Arrow = Basic_Arrow
+                Selected_Arrow = "Basic_Arrow"
                 Arrow_Attribute_Selecter()
             if event.key == K_2:
-                Selected_Arrow = Steel_Arrow
+                Selected_Arrow = "Steel_Arrow"
                 Arrow_Attribute_Selecter()
             if event.key == K_3:
-                Selected_Arrow = HollowPoint_Arrow
+                Selected_Arrow = "HollowPoint_Arrow"
                 Arrow_Attribute_Selecter()
             if event.key == K_4:
-                Selected_Arrow = Tri_Arrow
+                Selected_Arrow = "Tri_Arrow"
                 Arrow_Attribute_Selecter()
             if event.key == K_5:
-                Selected_Arrow = Frost_Arrow
+                Selected_Arrow = "Frost_Arrow"
                 Arrow_Attribute_Selecter()
         if event.type == pygame.KEYUP:
             if event.key == K_w:
@@ -477,8 +546,25 @@ while Run_Game:
                 move[1] = False
             elif event.key == K_d:
                 move[3] = False
+            if event.key == K_1:
+                Selected_Arrow = "Basic_Arrow"
+                Arrow_Attribute_Selecter()
+            if event.key == K_2:
+                Selected_Arrow = "Steel_Arrow"
+                Arrow_Attribute_Selecter()
+            if event.key == K_3:
+                Selected_Arrow = "HollowPoint_Arrow"
+                Arrow_Attribute_Selecter()
+            if event.key == K_4:
+                Selected_Arrow = "Tri_Arrow"
+                Arrow_Attribute_Selecter()
+            if event.key == K_5:
+                Selected_Arrow = "Frost_Arrow"
+                Arrow_Attribute_Selecter()
         if event.type == MOUSEBUTTONDOWN:
-            Arrow_Coordinate_Selecter()
+            # Arrow_Coordinate_Selecter()
+            if Selected_Arrow == "Basic_Arrow" or "Steel_Arrow" or "HollowPoint_Arrow" or "Tri_Arrow" or "Frost_Arrow":
+                Arrow_Type.Basic_Coordinates()
 
     if move[0]:
         playerInitialpos[1] += -Player1.playerSpeed
